@@ -4,7 +4,6 @@ use std::cmp;
 use std::convert::TryFrom;
 use std::fmt;
 use std::marker;
-use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_int, c_uint, c_void};
 use std::ptr;
 
@@ -145,7 +144,7 @@ pub struct Stream<D: Direction> {
 
 impl<D: Direction> Stream<D> {
     pub fn msg(&self) -> ErrorMessage {
-        let msg = self.stream_wrapper.msg;
+        let msg = unsafe { (*self.stream_wrapper.inner).msg };
         ErrorMessage(if msg.is_null() {
             None
         } else {
@@ -158,7 +157,7 @@ impl<D: Direction> Stream<D> {
 impl<D: Direction> Drop for Stream<D> {
     fn drop(&mut self) {
         unsafe {
-            let _ = D::destroy(&mut *self.stream_wrapper);
+            let _ = D::destroy(self.stream_wrapper.inner);
         }
     }
 }
@@ -253,7 +252,7 @@ impl InflateBackend for Inflate {
             -MZ_DEFAULT_WINDOW_BITS
         };
         unsafe {
-            inflateReset2(&mut *self.inner.stream_wrapper, bits);
+            inflateReset2(self.inner.stream_wrapper.inner, bits);
         }
         self.inner.total_out = 0;
         self.inner.total_in = 0;
@@ -349,7 +348,7 @@ impl DeflateBackend for Deflate {
     fn reset(&mut self) {
         self.inner.total_in = 0;
         self.inner.total_out = 0;
-        let rc = unsafe { mz_deflateReset(&mut *self.inner.stream_wrapper) };
+        let rc = unsafe { mz_deflateReset(self.inner.stream_wrapper.inner) };
         assert_eq!(rc, MZ_OK);
     }
 }
