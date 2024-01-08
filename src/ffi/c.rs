@@ -121,20 +121,6 @@ extern "C" fn zfree(_ptr: *mut c_void, address: *mut c_void) {
     }
 }
 
-impl Deref for StreamWrapper {
-    type Target = mz_stream;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.inner
-    }
-}
-
-impl DerefMut for StreamWrapper {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut *self.inner
-    }
-}
-
 unsafe impl<D: Direction> Send for Stream<D> {}
 unsafe impl<D: Direction> Sync for Stream<D> {}
 
